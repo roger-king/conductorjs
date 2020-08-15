@@ -17,7 +17,8 @@
   ],
   "scripts": {
     "build": "yarn -s clean && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json",
-    "clean": "rm -rf dist*"
+    "clean": "rm -rf dist*",
+    "dev": "tsc -p tsconfig.cjs.json -w"
   },
   "husky": {
     "hooks": {
@@ -35,14 +36,20 @@
     ]
   },
   "dependencies": {
+    "@slack/bolt": "^2.2.3",
+    "tedis": "^0.1.12",
     "tslib": "^2.0.1"
   },
   "devDependencies": {
     "husky": "^4.2.5",
     "jest": "^26.4.0",
     "lint-staged": "^10.2.11",
+    "nodemon": "^2.0.4",
     "prettier": "^2.0.5",
+    "sort-package-json": "^1.44.0",
     "ts-jest": "^26.2.0",
+    "ts-node": "^8.10.2",
+    "ts-node-dev": "^1.0.0-pre.57",
     "typescript": "^3.9.7"
   }
 }
