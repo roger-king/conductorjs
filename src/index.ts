@@ -25,29 +25,61 @@ export class LightningBolt implements ILightningBolt {
     };
   }
 
-  public async set(key: string, value: any) {
-    if (typeof value === "object") {
-      value = JSON.stringify(value);
-    }
-
-    this.dbConnection.set(key, value);
-  }
-
-  public async get(key: string): Promise<any> {
-    return this.dbConnection.get(key);
-  }
-
   public async saveInstallation(teamId: string, installation: Installation) {
-    this.set(teamId, installation);
+    this.dbConnection.hset(
+      "installations",
+      teamId,
+      JSON.stringify(installation)
+    );
   }
 
   public async fetchInstallation(id: string) {
-    const installation: Installation = await this.get(id);
-    return installation;
+    const installation = await this.dbConnection.hget("installations", id);
+    if (installation) {
+      return JSON.parse(installation);
+    }
+    return {};
+  }
+
+  public async authorize({
+    teamId,
+    enterpriseId,
+  }: {
+    teamId: string;
+    enterpriseId: string;
+  }): Promise<any> {
+    const installation = await this.fetchInstallation(teamId);
+
+    if (installation && installation.bot) {
+      return {
+        botToken: installation.bot.token,
+        botId: installation.bot.id,
+        botUserId: installation.bot.userId,
+      };
+    }
+
+    throw new Error("No authorization");
   }
 
   public async listen({ payload, context, next }: any) {
     this.setDbContext(context);
     await next();
   }
+
+  // routes to channel to fn
+  public async channelRouter([]: ChannelRoute[]) {}
+
+  // addChannelToMap - when app/bot is added to the channel it will add the channel_id as a router
+  public async addChannelToMap() {}
+}
+
+export interface ChannelRoute {
+  channel: string;
+  fn: () => Promise<void>;
+}
+
+export class LightningBoltConversationStore {
+  set() {}
+
+  get() {}
 }
