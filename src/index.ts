@@ -73,16 +73,16 @@ export class LightningBolt implements ILightningBolt {
 
     const savedChannels = await this.fetchSavedChannels(team);
 
-    if (
-      channel_type === "channel" &&
-      savedChannels.length > 0 &&
-      savedChannels.find((s: SlackChannel) => s.id === channel && s.enabled)
-    ) {
-      await next();
-      return;
+    if (channel_type === "channel") {
+      if (
+        savedChannels.length > 0 &&
+        !savedChannels.find((s: SlackChannel) => s.id === channel && s.enabled)
+      ) {
+        throw { code: 405, name: "unknown_channel" };
+      }
     }
 
-    throw { code: 405, name: "unknown_channel" };
+    await next();
   }
 
   public async handleError(error: CodedError) {
