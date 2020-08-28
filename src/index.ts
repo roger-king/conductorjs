@@ -14,8 +14,6 @@ export interface ILightningBolt {}
 
 export class LightningBolt implements ILightningBolt {
   public dbConnection: Tedis;
-  public message: any;
-  public next: any;
 
   constructor(dbConfig: DBConnectionConfig) {
     this.dbConnection = new Tedis(dbConfig as any);
@@ -99,6 +97,21 @@ export class LightningBolt implements ILightningBolt {
 
     return this.dbConnection.hset(
       "savedChannels",
+      teamId,
+      JSON.stringify(channels)
+    );
+  }
+
+  public async removeSavedChannel(teamId: string, channelId: string) {
+    let channels = [];
+    const savedChannels = await this.fetchSavedChannels(teamId);
+
+    if (savedChannels.length > 0) {
+      channels = savedChannels.filter((c: any) => c.id !== channelId);
+    }
+
+    return this.dbConnection.hset(
+      `savedChannels`,
       teamId,
       JSON.stringify(channels)
     );
