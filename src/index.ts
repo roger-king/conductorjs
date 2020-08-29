@@ -1,4 +1,5 @@
 import { Tedis } from "tedis";
+import { json, Router } from "express";
 import { CodedError } from "@slack/bolt";
 import { Installation } from "@slack/oauth";
 import { SlackChannel } from "./models";
@@ -12,11 +13,32 @@ export interface DBConnectionConfig {
 
 export interface IConductorBolt {}
 
+export interface ConductorConfig {
+  dbConfig: DBConnectionConfig;
+  router?: Router;
+  withChannelRoutes?: boolean;
+}
+
 export class Conductor implements IConductorBolt {
   public dbConnection: Tedis;
+  private router?: Router;
+  private withChannelRoutes?: boolean;
 
-  constructor(dbConfig: DBConnectionConfig) {
-    this.dbConnection = new Tedis(dbConfig as any);
+  constructor(conf: ConductorConfig) {
+    this.dbConnection = new Tedis(conf.dbConfig as any);
+    this.router = conf.router;
+
+    if (conf.withChannelRoutes) {
+      if (!conf.router) {
+        throw new Error("missing express router");
+      }
+      this.withChannelRoutes = conf.withChannelRoutes;
+    }
+
+    if (conf.router) {
+      this.router = conf.router;
+      this.setupRoutes();
+    }
   }
 
   private async setDbContext(context: any) {
@@ -127,11 +149,29 @@ export class Conductor implements IConductorBolt {
     return [];
   }
 
-  // routes to channel to fn
-  public async channelRouter([]: ChannelRoute[]) {}
+  private async setupRoutes() {
+    if (this.router && this.withChannelRoutes) {
+      this.router.use(json());
 
-  // addChannelToMap - when app/bot is added to the channel it will add the channel_id as a router
-  public async addChannelToMap() {}
+      this.router.post("/api/v1/:teamId/channels", async (req, res) => {
+        const { teamId } = req.params;
+        const { channel } = req.body;
+        await this.saveChannel(teamId, channel);
+        res.send({ data: true });
+        return;
+      });
+
+      this.router.delete(
+        "/api/v1/:teamId/channels/:channelId",
+        async (req, res) => {
+          const { teamId, channelId } = req.params;
+          await this.removeSavedChannel(teamId, channelId);
+          res.send({ data: true });
+          return;
+        }
+      );
+    }
+  }
 }
 
 export interface ChannelRoute {
