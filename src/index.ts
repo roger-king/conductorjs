@@ -10,9 +10,9 @@ export interface DBConnectionConfig {
   timeout?: string;
 }
 
-export interface ILightningBolt {}
+export interface IConductorBolt {}
 
-export class LightningBolt implements ILightningBolt {
+export class Conductor implements IConductorBolt {
   public dbConnection: Tedis;
 
   constructor(dbConfig: DBConnectionConfig) {
@@ -139,7 +139,7 @@ export interface ChannelRoute {
   fn: () => Promise<void>;
 }
 
-export class LightningBoltConversationStore {
+export class ConductorConversationStore {
   set() {}
 
   get() {}
