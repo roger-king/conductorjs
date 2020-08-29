@@ -2,7 +2,7 @@
 
 # Conductor
 
-A extension of slack bolt-js framework to help manage your sessions, installations, conversations, and channel event routing.
+An extension of slack bolt-js framework to help manage your sessions, installations, conversations, and channel event routing.
 
 ## Development
 
