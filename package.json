@@ -1,7 +1,7 @@
 {
-  "name": "lighning-bolt",
+  "name": "conductor",
   "version": "1.0.0",
-  "repository": "git@github.com:roger-king/lightning-bolt-js.git",
+  "repository": "git@github.com:roger-king/conductorjs.git",
   "license": "MIT",
   "author": "Roger King <rogr.king@gmail.com>",
   "main": "dist",
