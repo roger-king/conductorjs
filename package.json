@@ -1,6 +1,6 @@
 {
   "name": "conductor",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.0",
   "repository": "git@github.com:roger-king/conductorjs.git",
   "license": "MIT",
   "author": "Roger King <rogr.king@gmail.com>",
