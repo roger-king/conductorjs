@@ -21,9 +21,3 @@ export class Installations {
 }
 
 export class Message {}
-
-export interface SlackChannel {
-  id: string;
-  name: string;
-  enabled: boolean;
-}

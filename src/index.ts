@@ -2,7 +2,7 @@ import { Tedis } from "tedis";
 import { json, Router } from "express";
 import { CodedError } from "@slack/bolt";
 import { Installation } from "@slack/oauth";
-import { SlackChannel } from "./models";
+import { SlackChannel } from "./types";
 
 export interface DBConnectionConfig {
   host: string;
@@ -11,7 +11,17 @@ export interface DBConnectionConfig {
   timeout?: string;
 }
 
-export interface IConductorBolt {}
+export interface IConductor {
+  authorize(args: { teamId: string; enterpriseId: string }): Promise<any>;
+  listen(args: { payload: any; context: any; next: any }): Promise<void>;
+  shouldProcess(args: { payload: any; context: any; next: any }): Promise<void>;
+  handleError(error: CodedError): Promise<void>;
+  fetchSavedChannels(teamId: string): Promise<SlackChannel[]>;
+  removeSavedChannel(teamId: string, channelId: string): Promise<0 | 1>;
+  saveChannel(teamId: string, channel: SlackChannel): Promise<0 | 1>;
+  saveInstallation(teamId: string, installation: Installation): Promise<0 | 1>;
+  fetchInstallation(id: string): Promise<any>;
+}
 
 export interface ConductorConfig {
   dbConfig: DBConnectionConfig;
@@ -19,7 +29,7 @@ export interface ConductorConfig {
   withChannelRoutes?: boolean;
 }
 
-export class Conductor implements IConductorBolt {
+export class Conductor implements IConductor {
   public dbConnection: Tedis;
   private router?: Router;
   private withChannelRoutes?: boolean;
@@ -47,8 +57,11 @@ export class Conductor implements IConductorBolt {
     };
   }
 
-  public async saveInstallation(teamId: string, installation: Installation) {
-    this.dbConnection.hset(
+  public async saveInstallation(
+    teamId: string,
+    installation: Installation
+  ): Promise<0 | 1> {
+    return this.dbConnection.hset(
       "installations",
       teamId,
       JSON.stringify(installation)
@@ -83,12 +96,12 @@ export class Conductor implements IConductorBolt {
     throw new Error("No authorization");
   }
 
-  public async listen({ payload, context, next }: any) {
+  public async listen({ payload, context, next }: any): Promise<void> {
     this.setDbContext(context);
     await next();
   }
 
-  public async shouldProcess({ payload, context, next }: any) {
+  public async shouldProcess({ payload, context, next }: any): Promise<void> {
     const { team, channel, channel_type } = payload;
 
     const savedChannels = await this.fetchSavedChannels(team);
@@ -105,11 +118,14 @@ export class Conductor implements IConductorBolt {
     await next();
   }
 
-  public async handleError(error: CodedError) {
+  public async handleError(error: CodedError): Promise<void> {
     console.log(error);
   }
 
-  public async saveChannel(teamId: string, channel: SlackChannel) {
+  public async saveChannel(
+    teamId: string,
+    channel: SlackChannel
+  ): Promise<0 | 1> {
     let channels = [channel];
     const savedChannels = await this.fetchSavedChannels(teamId);
 
@@ -124,8 +140,11 @@ export class Conductor implements IConductorBolt {
     );
   }
 
-  public async removeSavedChannel(teamId: string, channelId: string) {
-    let channels = [];
+  public async removeSavedChannel(
+    teamId: string,
+    channelId: string
+  ): Promise<0 | 1> {
+    let channels: SlackChannel[] = [];
     const savedChannels = await this.fetchSavedChannels(teamId);
 
     if (savedChannels.length > 0) {
@@ -139,7 +158,7 @@ export class Conductor implements IConductorBolt {
     );
   }
 
-  public async fetchSavedChannels(teamId: string) {
+  public async fetchSavedChannels(teamId: string): Promise<SlackChannel[]> {
     const saved = await this.dbConnection.hget("savedChannels", teamId);
 
     if (saved) {
@@ -177,10 +196,4 @@ export class Conductor implements IConductorBolt {
 export interface ChannelRoute {
   channel: string;
   fn: () => Promise<void>;
-}
-
-export class ConductorConversationStore {
-  set() {}
-
-  get() {}
 }
