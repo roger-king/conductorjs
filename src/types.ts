@@ -4,6 +4,14 @@ export interface SlackChannel {
     enabled: boolean;
 }
 
+export interface SlackInstallation {
+    enterpriseId: string;
+    teamId: string;
+    botToken: string;
+    botUserId: string;
+    botId: string;
+}
+
 export interface DBConnectionConfig {
     host: string;
     port?: string;
