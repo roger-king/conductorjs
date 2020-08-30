@@ -1,5 +1,6 @@
 import { Tedis } from 'tedis';
 import { SlackChannel } from './types';
+import { Installation } from '@slack/oauth';
 
 export class ChannelRepository {
     constructor(private dbConnection: Tedis) {}
@@ -34,5 +35,22 @@ export class ChannelRepository {
         }
 
         return this.dbConnection.hset(`savedChannels`, teamId, JSON.stringify(channels));
+    }
+}
+
+export class InstallationRepository {
+    constructor(private dbConnection: Tedis) {}
+
+    public async save(teamId: string, installation: Installation): Promise<0 | 1> {
+        return this.dbConnection.hset('installations', teamId, JSON.stringify(installation));
+    }
+
+    public async findOne(id: string) {
+        const installation = await this.dbConnection.hget('installations', id);
+        if (installation) {
+            return JSON.parse(installation);
+        }
+
+        return {};
     }
 }

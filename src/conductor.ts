@@ -1,9 +1,10 @@
 import { Tedis } from 'tedis';
 import { json, Router } from 'express';
-import { CodedError, App } from '@slack/bolt';
-import { Installation } from '@slack/oauth';
+import { CodedError } from '@slack/bolt';
+import { WebClient } from '@slack/web-api';
+
 import { SlackChannel, DBConnectionConfig } from './types';
-import { ChannelRepository } from './repositories';
+import { ChannelRepository, InstallationRepository } from './repositories';
 import { APIV1Router } from './routes';
 
 export interface IConductor {
@@ -11,25 +12,26 @@ export interface IConductor {
     listen(args: { payload: any; context: any; next: any }): Promise<void>;
     shouldProcess(args: { payload: any; context: any; next: any }): Promise<void>;
     handleError(error: CodedError): Promise<void>;
-    saveInstallation(teamId: string, installation: Installation): Promise<0 | 1>;
-    fetchInstallation(id: string): Promise<any>;
 }
 
 export interface ConductorConfig {
     dbConfig: DBConnectionConfig;
-    slackApp: App;
+    slackClient?: WebClient;
     router?: Router;
     withChannelRoutes?: boolean;
 }
 
 export class Conductor implements IConductor {
     public dbConnection: Tedis;
-    private channelRepo: ChannelRepository;
+    public channelRepo: ChannelRepository;
+    private installationRepo: InstallationRepository;
     private router?: Router;
 
     constructor(conf: ConductorConfig) {
         this.dbConnection = new Tedis(conf.dbConfig as any);
         this.channelRepo = new ChannelRepository(this.dbConnection);
+        this.installationRepo = new InstallationRepository(this.dbConnection);
+
         this.router = conf.router;
 
         if (conf.withChannelRoutes) {
@@ -51,20 +53,8 @@ export class Conductor implements IConductor {
         };
     }
 
-    public async saveInstallation(teamId: string, installation: Installation): Promise<0 | 1> {
-        return this.dbConnection.hset('installations', teamId, JSON.stringify(installation));
-    }
-
-    public async fetchInstallation(id: string) {
-        const installation = await this.dbConnection.hget('installations', id);
-        if (installation) {
-            return JSON.parse(installation);
-        }
-        return {};
-    }
-
     public async authorize({ teamId, enterpriseId }: { teamId: string; enterpriseId: string }): Promise<any> {
-        const installation = await this.fetchInstallation(teamId);
+        const installation = await this.installationRepo.findOne(teamId);
 
         if (installation && installation.bot) {
             return {
