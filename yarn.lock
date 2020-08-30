@@ -4437,6 +4437,11 @@ redent@^1.0.0:
     indent-string "^2.1.0"
     strip-indent "^1.0.1"
 
+redis-mock@^0.51.0:
+  version "0.51.0"
+  resolved "https://registry.yarnpkg.com/redis-mock/-/redis-mock-0.51.0.tgz#14d21bb0877299b3fbb022a85ffff481c56d43f3"
+  integrity sha512-b4vzfpDY5DlwcNgM3rkL51gitAQqOdCMu3GgQLb/ZQ2tOLOtLQ4Xi8goYA5cSLPp6w1AhVYvdIgTaYAYlOdncg==
+
 regex-not@^1.0.0, regex-not@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/regex-not/-/regex-not-1.0.2.tgz#1f4ece27e00b0b65e0247a6810e6a85d83a5752c"
